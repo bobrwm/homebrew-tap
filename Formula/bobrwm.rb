@@ -13,8 +13,3 @@ class Bobrwm < Formula
     system "#{bin}/bobrwm", "--version"
   end
 end
-```
-
-Users install with:
-```
-brew install --HEAD bobrwm/tap/bobrwm
