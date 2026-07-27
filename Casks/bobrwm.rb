@@ -15,11 +15,20 @@ cask "bobrwm" do
     skip "Rolling release; the upstream release workflow updates this cask"
   end
 
-  depends_on macos: ">= :ventura"
+  depends_on macos: :ventura
   depends_on arch: :arm64
 
   app "Bobrwm.app"
   binary "#{appdir}/Bobrwm.app/Contents/MacOS/bobrwm-cli", target: "bobrwm"
+
+  uninstall quit: "com.bobrwm.bobrwm"
+
+  # Leaves ~/.config/bobrwm alone: the config is the user's, not ours.
+  zap trash: [
+    "~/Library/Application Support/com.bobrwm.bobrwm",
+    "~/Library/Caches/com.bobrwm.bobrwm",
+    "~/Library/Preferences/com.bobrwm.bobrwm.plist",
+  ]
 
   caveats <<~EOS
     Bobrwm needs Accessibility access to manage windows. Launch it once, then
@@ -27,5 +36,9 @@ cask "bobrwm" do
 
     To run it at login, set `.start_at_login = true` in
     ~/.config/bobrwm/config.zon.
+
+    Upgrading from the old formula? Remove it so the two do not both own
+    `bobrwm` on your PATH:
+      brew uninstall --formula bobrwm
   EOS
 end
