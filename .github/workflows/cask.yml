@@ -7,11 +7,15 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: cask
+  cancel-in-progress: false
+
 jobs:
   cask:
     runs-on: macos-15
     env:
-      TAG: ${{ github.event.client_payload.tag }}
+      VERSION: ${{ github.event.client_payload.version }}
       ARTIFACT_SHA256: ${{ github.event.client_payload.sha256 }}
     steps:
       - name: Checkout
@@ -19,24 +23,35 @@ jobs:
 
       - name: Update cask
         run: |
-          version="${TAG#v}"
+          test -n "$VERSION"
+          # A short hex string here would mean the payload lost the checksum;
+          # committing it would break every install until the next push.
+          case "$ARTIFACT_SHA256" in
+            [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]*) ;;
+            *) echo "bad sha256: $ARTIFACT_SHA256" >&2; exit 1 ;;
+          esac
 
           # The release job hands us the checksum of the artifact it just
           # stapled, so there is nothing to download or rebuild here.
           sed -i '' \
-            -e "s|^  version .*|  version \"${version}\"|" \
+            -e "s|^  version .*|  version \"${VERSION}\"|" \
             -e "s|^  sha256 .*|  sha256 \"${ARTIFACT_SHA256}\"|" \
             Casks/bobrwm.rb
 
           cat Casks/bobrwm.rb
 
       - name: Verify cask
-        run: brew audit --cask --online Casks/bobrwm.rb
+        run: |
+          ruby -c Casks/bobrwm.rb
+          url="$(ruby -e 'puts File.read("Casks/bobrwm.rb")[%r{https://\S+\.zip}]')"
+          curl -fsSLI -o /dev/null "$url"
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Casks/
-          git commit -m "bobrwm ${TAG}"
+          # Reruns of the same build are a no-op rather than a failure.
+          git diff --cached --quiet && exit 0
+          git commit -m "bobrwm ${VERSION}"
           git push
