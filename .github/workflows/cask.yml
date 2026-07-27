@@ -1,0 +1,42 @@
+name: Cask
+
+on:
+  repository_dispatch:
+    types: [cask]
+
+permissions:
+  contents: write
+
+jobs:
+  cask:
+    runs-on: macos-15
+    env:
+      TAG: ${{ github.event.client_payload.tag }}
+      ARTIFACT_SHA256: ${{ github.event.client_payload.sha256 }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Update cask
+        run: |
+          version="${TAG#v}"
+
+          # The release job hands us the checksum of the artifact it just
+          # stapled, so there is nothing to download or rebuild here.
+          sed -i '' \
+            -e "s|^  version .*|  version \"${version}\"|" \
+            -e "s|^  sha256 .*|  sha256 \"${ARTIFACT_SHA256}\"|" \
+            Casks/bobrwm.rb
+
+          cat Casks/bobrwm.rb
+
+      - name: Verify cask
+        run: brew audit --cask --online Casks/bobrwm.rb
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/
+          git commit -m "bobrwm ${TAG}"
+          git push
