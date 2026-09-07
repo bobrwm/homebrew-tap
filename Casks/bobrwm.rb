@@ -1,6 +1,6 @@
 cask "bobrwm" do
-  version "0.1.0-main-113693b"
-  sha256 "fc3d55977782e9f01ee1111d90e467120e083220be6dbed92aaaaf7fac037b01"
+  version "0.1.0-main-746d9a9"
+  sha256 "7505099af8969ab2c985eebea1ba01e7fe7ec68c476c37a58bc864d4821e8799"
 
   # Rolling: `tip` is a moving tag republished on every push to main, so the
   # URL never changes. The version above exists only to make `brew upgrade`
