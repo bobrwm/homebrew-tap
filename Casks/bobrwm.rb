@@ -2,11 +2,7 @@ cask "bobrwm" do
   version "0.1.0-main-2eb88e0"
   sha256 "d0459444eec03fc339508968dbfbddb059a2135ecf1084374036021e7018cd6a"
 
-  # Rolling: `tip` is a moving tag republished on every push to main, so the
-  # URL never changes. The version above exists only to make `brew upgrade`
-  # notice that a new build landed.
-  url "https://github.com/bobrwm/bobrwm/releases/download/tip/bobrwm-tip-aarch64-macos.zip",
-      verified: "github.com/bobrwm/bobrwm/"
+  url "https://github.com/bobrwm/bobrwm/releases/download/tip/bobrwm-tip-aarch64-macos.zip"
   name "bobrwm"
   desc "Tiling window manager for macOS"
   homepage "https://github.com/bobrwm/bobrwm"

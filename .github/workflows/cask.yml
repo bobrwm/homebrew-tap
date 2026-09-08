@@ -15,43 +15,43 @@ jobs:
   cask:
     runs-on: macos-15
     env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
       VERSION: ${{ github.event.client_payload.version }}
+      ARTIFACT: ${{ github.event.client_payload.artifact }}
       ARTIFACT_SHA256: ${{ github.event.client_payload.sha256 }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
       - name: Update cask
+        run: python3 script/update-cask.py
+
+      - name: Verify artifact
         run: |
-          test -n "$VERSION"
-          # A short hex string here would mean the payload lost the checksum;
-          # committing it would break every install until the next push.
-          case "$ARTIFACT_SHA256" in
-            [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]*) ;;
-            *) echo "bad sha256: $ARTIFACT_SHA256" >&2; exit 1 ;;
-          esac
-
-          # The release job hands us the checksum of the artifact it just
-          # stapled, so there is nothing to download or rebuild here.
-          sed -i '' \
-            -e "s|^  version .*|  version \"${VERSION}\"|" \
-            -e "s|^  sha256 .*|  sha256 \"${ARTIFACT_SHA256}\"|" \
-            Casks/bobrwm.rb
-
-          cat Casks/bobrwm.rb
+          curl --fail --location --retry 3 \
+            "https://github.com/bobrwm/bobrwm/releases/download/tip/$ARTIFACT" \
+            --output "$RUNNER_TEMP/$ARTIFACT"
+          printf '%s  %s\n' "$ARTIFACT_SHA256" "$RUNNER_TEMP/$ARTIFACT" | shasum -a 256 --check
+          ditto -x -k "$RUNNER_TEMP/$ARTIFACT" "$RUNNER_TEMP/bobrwm"
+          codesign --verify --deep --strict "$RUNNER_TEMP/bobrwm/Bobrwm.app"
+          xcrun stapler validate "$RUNNER_TEMP/bobrwm/Bobrwm.app"
 
       - name: Verify cask
         run: |
           ruby -c Casks/bobrwm.rb
-          url="$(ruby -e 'puts File.read("Casks/bobrwm.rb")[%r{https://\S+\.zip}]')"
-          curl -fsSLI -o /dev/null "$url"
+          mkdir -p "$(brew --repository)/Library/Taps/bobrwm"
+          ln -s "$GITHUB_WORKSPACE" "$(brew --repository)/Library/Taps/bobrwm/homebrew-tap"
+          brew trust bobrwm/tap
+          brew install --cask bobrwm/tap/bobrwm
+          bobrwm --version
+          codesign --verify --deep --strict /Applications/Bobrwm.app
+          xcrun stapler validate /Applications/Bobrwm.app
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Casks/
-          # Reruns of the same build are a no-op rather than a failure.
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/bobrwm.rb
           git diff --cached --quiet && exit 0
-          git commit -m "bobrwm ${VERSION}"
+          git commit -m "chore(cask): update bobrwm to ${VERSION}"
           git push
