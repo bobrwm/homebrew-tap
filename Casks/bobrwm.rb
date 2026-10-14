@@ -1,8 +1,8 @@
 cask "bobrwm" do
-  version "0.1.0-main.71.1"
-  sha256 "e02fa9311f5b5a20f9c4726f979213aaf90441dbb8a71025589e78a23e89d0f0"
+  version "0.1.0-main.72.1"
+  sha256 "d30cc4328dc5c9cc055e7600d195d0c29e06160628642c21181005648bc7d79c"
 
-  url "https://github.com/bobrwm/bobrwm/releases/download/tip/bobrwm-tip-38620686728-1-aarch64-macos.zip"
+  url "https://github.com/bobrwm/bobrwm/releases/download/tip/bobrwm-tip-38653845386-1-aarch64-macos.zip"
   name "bobrwm"
   desc "Tiling window manager for macOS"
   homepage "https://github.com/bobrwm/bobrwm"
