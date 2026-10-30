@@ -9,7 +9,7 @@ checksum = os.environ["ARTIFACT_SHA256"]
 if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+-main\.[0-9]+\.[0-9]+", version):
     raise SystemExit("invalid version")
 
-if not re.fullmatch(r"bobrwm-tip-[0-9]+-[0-9]+-aarch64-macos\.zip", artifact):
+if not re.fullmatch(r"bobrwm-tip-[0-9a-f]{40}-aarch64-macos\.zip", artifact):
     raise SystemExit("invalid artifact name")
 
 if not re.fullmatch(r"[0-9a-f]{64}", checksum):
